@@ -1,0 +1,4 @@
+IMU_RAW_TOPIC: "/camera/imu"
+IMU_FILTERED_TOPIC: "/ukf/imu"
+L_MOTOR_RATE_TOPIC: "/speed1"
+R_MOTOR_RATE_TOPIC: "/speed2"

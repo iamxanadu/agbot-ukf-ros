@@ -4,8 +4,8 @@
 // government, commercial, or other organizational use.
 // File: sqrt.h
 //
-// MATLAB Coder version            : 4.1
-// C/C++ source code generated on  : 30-Nov-2019 15:37:58
+// MATLAB Coder version            : 4.2
+// C/C++ source code generated on  : 03-Dec-2019 16:27:42
 //
 #ifndef SQRT_H
 #define SQRT_H
@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "rtwtypes.h"
-#include "AgBot_simulinkfunction_types.h"
+#include "agbot_simulinkblock_20191202_types.h"
 
 // Function Declarations
 extern void b_sqrt(double *x);

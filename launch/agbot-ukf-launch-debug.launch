@@ -1,0 +1,9 @@
+<launch>
+
+  <!-- Launch ROS Package Template Node -->
+
+  <node pkg="agbot_ukf" type="agbot_ukf" name="agbot_ukf" launch-prefix="gdb -ex run -args" output="screen">
+    <rosparam command="load" file="$(find agbot_ukf)/config/default.yaml" />
+  </node>
+
+</launch>

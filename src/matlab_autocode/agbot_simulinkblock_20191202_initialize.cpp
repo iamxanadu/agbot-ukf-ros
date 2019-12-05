@@ -2,16 +2,16 @@
 // Academic License - for use in teaching, academic research, and meeting
 // course requirements at degree granting institutions only.  Not for
 // government, commercial, or other organizational use.
-// File: AgBot_simulinkfunction_initialize.cpp
+// File: agbot_simulinkblock_20191202_initialize.cpp
 //
-// MATLAB Coder version            : 4.1
-// C/C++ source code generated on  : 30-Nov-2019 15:37:58
+// MATLAB Coder version            : 4.2
+// C/C++ source code generated on  : 03-Dec-2019 16:27:42
 //
 
 // Include Files
 #include "rt_nonfinite.h"
-#include "AgBot_simulinkfunction.h"
-#include "AgBot_simulinkfunction_initialize.h"
+#include "agbot_simulinkblock_20191202.h"
+#include "agbot_simulinkblock_20191202_initialize.h"
 
 // Function Definitions
 
@@ -19,13 +19,13 @@
 // Arguments    : void
 // Return Type  : void
 //
-void AgBot_simulinkfunction_initialize()
+void agbot_simulinkblock_20191202_initialize()
 {
   rt_InitInfAndNaN(8U);
 }
 
 //
-// File trailer for AgBot_simulinkfunction_initialize.cpp
+// File trailer for agbot_simulinkblock_20191202_initialize.cpp
 //
 // [EOF]
 //

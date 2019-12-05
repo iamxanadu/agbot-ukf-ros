@@ -63,6 +63,7 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>eigen_catkin</exec_depend>
 
+  <depend>message_filters</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
