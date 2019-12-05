@@ -1,9 +1,12 @@
 <launch>
 
   <!-- Launch ROS Package Template Node -->
+  <rosparam command="load" file="$(find agbot_ukf)/config/default.yaml" />
 
-  <node pkg="agbot_ukf" type="agbot_ukf" name="agbot_ukf" output="screen">
-    <rosparam command="load" file="$(find agbot_ukf)/config/default.yaml" />
-  </node>
+  <node pkg="rosbag" type="play" name="agbot_data" output="log" args="-s 25 /home/expanse/Downloads/agbot_sensors_realsense_2019-12-03-16-53-49.bag" />
+
+  <node pkg="agbot_ukf" type="agbot_ukf" name="agbot_ukf" output="screen" />
+
+
 
 </launch>
