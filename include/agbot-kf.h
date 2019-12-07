@@ -1,3 +1,14 @@
+/**
+ * @file agbot-kf.h
+ * @author Josef Biberstein (jxb@mit.edu)
+ * @brief 
+ * @version 0.1
+ * @date 2019-12-07
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
 #include <iostream>
 
 #include <Eigen/Eigen>

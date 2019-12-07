@@ -1,4 +1,15 @@
-#include <agbot_ukf/StampedInt.h>
+/**
+ * @file agbot_kf_node.cpp
+ * @author Josef Biberstein (jxb@mit.edu)
+ * @brief 
+ * @version 0.1
+ * @date 2019-12-07
+ * 
+ * @copyright Copyright (c) 2019
+ * 
+ */
+
+#include <agbot_kf/StampedInt.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
 
@@ -6,12 +17,15 @@
 #include <spkf/ekf.h> // TODO (josef) Add the option to switch between ekf and ukf. also get ukf working
 #include <spkf/ukf.h>
 
-#include "agbot-ukf.h"
+#include "agbot-kf.h"
 
 /* Names of topics to publish and subscribe on */
 std::string top_imu_raw;
 std::string top_imu_filtered;
 std::string top_l_motor_rate, top_r_motor_rate;
+
+/* Use UKF or EKF */
+std::string filter_type;
 
 /* Loop rate to try to enforce in Hz */
 int loop_rate;
@@ -19,8 +33,9 @@ int loop_rate;
 /* Publisher for the filtered IMU messages */
 ros::Publisher imu_filtered;
 
-/* Pointer to the KF */
-spkf::EKF<process_t<double>, observe_t<double>> *ukf;
+/* Pointer to the KF options */
+spkf::UKF<process_t<double>, observe_t<double>> * ukf;
+spkf::EKF<process_t<double>, observe_t<double>> * ekf;
 
 /**
  * @brief Callback to recieve raw IMU measurements from the robot or rosbag
@@ -47,8 +62,13 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
 
   /* Innovate and update the KF using this measurement */
   /* Addative obs noise - we use zero here */
-  ukf->innovate(observ, ObsT<double>::Zero());
-  ukf->update();
+  if (filter_type == "ukf") {
+    ukf->innovate(observ, ObsT<double>::Zero());
+    ukf->update();
+  } else {
+    ekf->innovate(observ, ObsT<double>::Zero());
+    ekf->update();
+  }
 
   /* Create new IMU packet with same header */
   sensor_msgs::Imu nimu;
@@ -76,7 +96,7 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
  *
  * @param msg The timestamped int message
  */
-void leftSpeedCallback(const agbot_ukf::StampedInt::ConstPtr &msg) {
+void leftSpeedCallback(const agbot_kf::StampedInt::ConstPtr &msg) {
   ul = msg->data * -2 * M_PI / (1.079 * 2400);
 
   // ROS_INFO_STREAM_THROTTLE(0.1, "Left encoder " << ul);
@@ -87,7 +107,7 @@ void leftSpeedCallback(const agbot_ukf::StampedInt::ConstPtr &msg) {
  *
  * @param msg The timestamped int message
  */
-void rightSpeedCallback(const agbot_ukf::StampedInt::ConstPtr &msg) {
+void rightSpeedCallback(const agbot_kf::StampedInt::ConstPtr &msg) {
   ur = msg->data * 2 * M_PI / (1.070 * 2400);
 
   // ROS_INFO_STREAM_THROTTLE(0.1, "Right encoder " << ur);
@@ -110,6 +130,7 @@ int main(int argc, char **argv) {
   nh.param<std::string>("L_MOTOR_RATE_TOPIC", top_l_motor_rate, "/speed1");
   nh.param<std::string>("R_MOTOR_RATE_TOPIC", top_r_motor_rate, "/speed2");
   nh.param<int>("LOOP_RATE", loop_rate, 1000);
+  nh.param<std::string>("FILTER_TYPE", filter_type, "ekf");
 
   /* Setup subscribers and publishers */
   // TODO (josef) May want to try to get synch policy working for tred speed
@@ -149,8 +170,14 @@ int main(int argc, char **argv) {
   StateT<double> proc_noise = StateT<double>::Zero();
 
   /* Create the KF here */
-  ukf = new spkf::EKF<process_t<double>, observe_t<double>>(
-      state, 0.0001 * covar, 0.0001 * procovar, obscovar);
+
+  if (filter_type == "ukf") {
+    ukf = new spkf::UKF<process_t<double>, observe_t<double>>(
+        state, 0.0001 * covar, 0.0001 * procovar, obscovar);
+  } else {
+    ekf = new spkf::EKF<process_t<double>, observe_t<double>>(
+        state, 0.0001 * covar, 0.0001 * procovar, obscovar);
+  }
 
   /* ROS loop rate */
   ros::Rate r(loop_rate);
@@ -163,8 +190,13 @@ int main(int argc, char **argv) {
     control[1] = ur;
 
     /* Run a predict step on the KF */
-    ukf->predict(control, 1 / float(loop_rate),
-                 proc_noise); // Run a dead reconing step
+    if (filter_type == "ukf") {
+      ukf->predict(control, 1 / float(loop_rate),
+                   proc_noise); // Run a dead reconing step
+    } else {
+      ekf->predict(control, 1 / float(loop_rate),
+                   proc_noise); // Run a dead reconing step
+    }
 
     /* Process ROS callbacks - will innovate KF here if get an IMU measurement
      */

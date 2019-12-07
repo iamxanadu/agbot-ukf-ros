@@ -4,9 +4,9 @@
   <rosparam command="load" file="$(find agbot_ukf)/config/default.yaml" />
 
   <!-- make the bag location a param -->
-  <node pkg="rosbag" type="play" name="agbot_data" output="log" args="-s 25 /home/josef/Downloads/agbot_sensors_realsense_2019-12-03-16-53-49.bag" />
+  <node pkg="rosbag" type="play" name="agbot_data" output="log" args="-s 25 $(arg BAG_LOCATION)" />
 
-  <node pkg="agbot_ukf" type="agbot_ukf" name="agbot_ukf" output="screen" />
+  <node pkg="agbot_kf" type="agbot_kf" name="agbot_kf" output="screen" />
 
 
 

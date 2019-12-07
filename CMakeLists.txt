@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(agbot_ukf)
+project(agbot_kf)
 
 find_package(catkin_simple REQUIRED)
 
@@ -16,7 +16,7 @@ include_directories(include/matlab_autocode include/spkf)
 
 # Compile executable
 cs_add_executable(${PROJECT_NAME}
-  src/agbot_ukf_node.cpp ${MATLAB_AUTOCODE})
+  src/agbot_kf_node.cpp ${MATLAB_AUTOCODE})
 
 cs_install()
 

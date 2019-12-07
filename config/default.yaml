@@ -3,4 +3,5 @@ IMU_FILTERED_TOPIC: "/ukf/imu"
 L_MOTOR_RATE_TOPIC: "/speed1"
 R_MOTOR_RATE_TOPIC: "/speed2"
 LOOP_RATE: 100
-BAG_LOCATION: "/home/expanse/Downloads/agbot_sensors_realsense_2019-12-03-16-53-49.bag"
+BAG_LOCATION: "/home/josef/Downloads/agbot_sensors_realsense_2019-12-03-16-53-49.bag"
+FILTER_TYPE: "ekf" # Either "ukf" or "ekf"
