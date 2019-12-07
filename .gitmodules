@@ -1,0 +1,3 @@
+[submodule "include/spkf"]
+	path = include/spkf
+	url = git@github.com:iamxanadu/spkf.git
