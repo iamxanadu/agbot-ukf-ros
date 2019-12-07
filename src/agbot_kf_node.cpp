@@ -1,28 +1,34 @@
 /**
  * @file agbot_kf_node.cpp
  * @author Josef Biberstein (jxb@mit.edu)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2019-12-07
- * 
+ *
  * @copyright Copyright (c) 2019
- * 
+ *
  */
 
+#include <agbot_kf/KFState.h>
 #include <agbot_kf/StampedInt.h>
+#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/Twist.h>
 #include <ros/ros.h>
 #include <sensor_msgs/Imu.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include <matlab_autocode/agbot_simulinkblock_20191202_initialize.h>
 #include <spkf/ekf.h> // TODO (josef) Add the option to switch between ekf and ukf. also get ukf working
 #include <spkf/ukf.h>
 
-#include "agbot-kf.h"
+#include "agbot_kf.h"
 
 /* Names of topics to publish and subscribe on */
 std::string top_imu_raw;
 std::string top_imu_filtered;
 std::string top_l_motor_rate, top_r_motor_rate;
+std::string top_kalman_filter_state;
 
 /* Use UKF or EKF */
 std::string filter_type;
@@ -30,12 +36,75 @@ std::string filter_type;
 /* Loop rate to try to enforce in Hz */
 int loop_rate;
 
+/* Rate at which to publish the kf state */
+int kf_pub_rate;
+
+/* Inputs for the kf from the YAML config */
+std::vector<double> init_state(14, 0);
+std::vector<double> init_state_covar(14, 0);
+std::vector<double> proc_covar(14, 0);
+std::vector<double> obs_covar(6, 0);
+
 /* Publisher for the filtered IMU messages */
-ros::Publisher imu_filtered;
+ros::Publisher imu_filtered_pub;
+
+/* Debug publisher for KF pos and vel estimate */
+ros::Publisher kalman_state_pub;
 
 /* Pointer to the KF options */
-spkf::UKF<process_t<double>, observe_t<double>> * ukf;
-spkf::EKF<process_t<double>, observe_t<double>> * ekf;
+spkf::UKF<process_t<double>, observe_t<double>> *ukf;
+spkf::EKF<process_t<double>, observe_t<double>> *ekf;
+
+/**
+ * @brief Publish the kalman filter pose and twist periodically
+ *
+ */
+void kalmanFilterStateCallback(const ros::TimerEvent& event) {
+  agbot_kf::KFState msg;
+
+  tf2::Quaternion q;
+
+  if (filter_type == "ukf") {
+    msg.pose.position.x = ukf->state()[5];
+    msg.pose.position.y = ukf->state()[6];
+    msg.pose.position.z = ukf->state()[7];
+
+    q.setRPY(ukf->state()[1], ukf->state()[0], ukf->state()[2]);
+    q.normalize();
+
+    tf2::convert(msg.pose.orientation, q);
+
+    msg.twist.linear.x = ukf->state()[11];
+    msg.twist.linear.y = ukf->state()[12];
+    msg.twist.linear.z = ukf->state()[13];
+
+    msg.twist.angular.x = ukf->state()[8];
+    msg.twist.angular.y = ukf->state()[9];
+    msg.twist.angular.z = ukf->state()[10];
+
+  } else {
+    msg.pose.position.x = ekf->state()[5];
+    msg.pose.position.y = ekf->state()[6];
+    msg.pose.position.z = ekf->state()[7];
+
+    q.setRPY(ekf->state()[1], ekf->state()[0], ekf->state()[2]);
+    q.normalize();
+
+    tf2::convert(msg.pose.orientation, q);
+
+    msg.twist.linear.x = ekf->state()[11];
+    msg.twist.linear.y = ekf->state()[12];
+    msg.twist.linear.z = ekf->state()[13];
+
+    msg.twist.angular.x = ekf->state()[8];
+    msg.twist.angular.y = ekf->state()[9];
+    msg.twist.angular.z = ekf->state()[10];
+  }
+
+  /* Timestamep header right before we send the msg */
+  msg.header.stamp = ros::Time::now();
+  kalman_state_pub.publish(msg);
+}
 
 /**
  * @brief Callback to recieve raw IMU measurements from the robot or rosbag
@@ -87,7 +156,7 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
   nimu.linear_acceleration.x = fax;
   nimu.linear_acceleration.y = fay;
   nimu.linear_acceleration.z = faz;
-  imu_filtered.publish(nimu); // Publish filtered IMU
+  imu_filtered_pub.publish(nimu); // Publish filtered IMU
 }
 
 /**
@@ -130,7 +199,17 @@ int main(int argc, char **argv) {
   nh.param<std::string>("L_MOTOR_RATE_TOPIC", top_l_motor_rate, "/speed1");
   nh.param<std::string>("R_MOTOR_RATE_TOPIC", top_r_motor_rate, "/speed2");
   nh.param<int>("LOOP_RATE", loop_rate, 1000);
+  nh.param<int>("KF_PUB_RATE", kf_pub_rate, 10);
   nh.param<std::string>("FILTER_TYPE", filter_type, "ekf");
+
+  if (!nh.getParam("KF_INITIAL_STATE", init_state))
+    ROS_ERROR("Failed to get KF_INITIAL_STATE parameter from config");
+  if (!nh.getParam("KF_INITIAL_STATE_COVAR", init_state_covar))
+    ROS_ERROR("Failed to get KF_INITIAL_STATE_COVAR parameter from config");
+  if (!nh.getParam("KF_PROC_COVAR", proc_covar))
+    ROS_ERROR("Failed to get KF_PROC_COVAR parameter from config");
+  if (!nh.getParam("KF_OBS_COVAR", obs_covar))
+    ROS_ERROR("Failed to get KF_OBS_COVAR parameter from config");
 
   /* Setup subscribers and publishers */
   // TODO (josef) May want to try to get synch policy working for tred speed
@@ -140,28 +219,45 @@ int main(int argc, char **argv) {
       nh.subscribe(top_l_motor_rate, 1, leftSpeedCallback);
   ros::Subscriber r_motor_rate =
       nh.subscribe(top_r_motor_rate, 1, rightSpeedCallback);
-  imu_filtered = nh.advertise<sensor_msgs::Imu>(top_imu_filtered, 100);
+  imu_filtered_pub = nh.advertise<sensor_msgs::Imu>(top_imu_filtered, 100);
+  kalman_state_pub =
+      nh.advertise<agbot_kf::KFState>(top_kalman_filter_state, 10);
+
+  /* Create timer to publish the kalman filter state at a given rate */
+  ros::Timer kf_state_timer = nh.createTimer(
+      ros::Duration(1 / float(kf_pub_rate)), kalmanFilterStateCallback);
 
   /* Create initial states for Kalman filter */
-  StateT<double> state = StateT<double>::Zero();
-  state[0] = -1.4826 * 0.0174532925199433; // Initial state for pitch
-  state[7] = 0.165;                        // Initial state for z position
 
-  /* Setup the covariance for initial state, the process model and the
-   * observation model */
-  const auto covar = Eigen::Matrix<double, 14, 14>(
-      (Eigen::VectorXd(14) << 100, 100, 100, 10, 10, 10, 10, 10, 300, 300, 300,
-       200, 200, 200)
-          .finished()
-          .asDiagonal()); // 0.00001 * CovarT<double>::Identity();
-  const auto procovar = Eigen::Matrix<double, 14, 14>(
-      (Eigen::VectorXd(14) << 0, 0, 0, 0, 0, 0, 0, 0, 300, 300, 300, 0, 0, 0)
-          .finished()
-          .asDiagonal());
-  const auto obscovar = Eigen::Matrix<double, 6, 6>(
-      (Eigen::VectorXd(6) << 0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
-          .finished()
-          .asDiagonal());
+  StateT<double> init_state_vec(init_state.data());
+  StateT<double> state_covar_diag(init_state_covar.data());
+  StateT<double> proc_covar_diag(proc_covar.data());
+  ObsT<double> obs_covar_diag(obs_covar.data());
+
+  const auto init_covar_mat = CovarT<double>(state_covar_diag.asDiagonal());
+  const auto proc_covar_mat = CovarT<double>(proc_covar_diag.asDiagonal());
+  const auto obs_covar_mat = ObsCovarT<double>(obs_covar_diag.asDiagonal());
+
+  // StateT<double> state = StateT<double>::Zero();
+  // state[0] = -1.4826 * 0.0174532925199433; // Initial state for pitch
+  // state[7] = 0.165;                        // Initial state for z position
+
+  // /* Setup the covariance for initial state, the process model and the
+  //  * observation model */
+  // const auto covar = Eigen::Matrix<double, 14, 14>(
+  //     (Eigen::VectorXd(14) << 100, 100, 100, 10, 10, 10, 10, 10, 300, 300,
+  //     300,
+  //      200, 200, 200)
+  //         .finished()
+  //         .asDiagonal()); // 0.00001 * CovarT<double>::Identity();
+  // const auto procovar = Eigen::Matrix<double, 14, 14>(
+  //     (Eigen::VectorXd(14) << 0, 0, 0, 0, 0, 0, 0, 0, 300, 300, 300, 0, 0, 0)
+  //         .finished()
+  //         .asDiagonal());
+  // const auto obscovar = Eigen::Matrix<double, 6, 6>(
+  //     (Eigen::VectorXd(6) << 0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
+  //         .finished()
+  //         .asDiagonal());
 
   /* Init the control vector */
   ControlT<double> control;
@@ -173,10 +269,12 @@ int main(int argc, char **argv) {
 
   if (filter_type == "ukf") {
     ukf = new spkf::UKF<process_t<double>, observe_t<double>>(
-        state, 0.0001 * covar, 0.0001 * procovar, obscovar);
+        init_state_vec, 0.0001 * init_covar_mat, 0.0001 * proc_covar_mat,
+        obs_covar_mat);
   } else {
     ekf = new spkf::EKF<process_t<double>, observe_t<double>>(
-        state, 0.0001 * covar, 0.0001 * procovar, obscovar);
+        init_state_vec, 0.0001 * init_covar_mat, 0.0001 * proc_covar_mat,
+        obs_covar_mat);
   }
 
   /* ROS loop rate */

@@ -1,5 +1,5 @@
 /**
- * @file agbot-kf.h
+ * @file agbot_kf.h
  * @author Josef Biberstein (jxb@mit.edu)
  * @brief 
  * @version 0.1

@@ -1,7 +1,49 @@
 IMU_RAW_TOPIC: "/camera/imu"
-IMU_FILTERED_TOPIC: "/ukf/imu"
+IMU_FILTERED_TOPIC: "/kf/imu"
 L_MOTOR_RATE_TOPIC: "/speed1"
 R_MOTOR_RATE_TOPIC: "/speed2"
+KALMAN_STATE_TOPIC: "/kf/state"
 LOOP_RATE: 100
+KF_PUB_RATE: 10
 BAG_LOCATION: "/home/josef/Downloads/agbot_sensors_realsense_2019-12-03-16-53-49.bag"
 FILTER_TYPE: "ekf" # Either "ukf" or "ekf"
+
+KF_INITIAL_STATE:
+  [
+    −0.025876251,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.165,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+  ]
+KF_INITIAL_STATE_COVAR:
+  [
+    100.0,
+    100.0,
+    100.0,
+    10.0,
+    10.0,
+    10.0,
+    10.0,
+    10.0,
+    300.0,
+    300.0,
+    300.0,
+    200.0,
+    200.0,
+    200.0,
+  ]
+
+KF_PROC_COVAR:
+  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 300.0, 300.0, 300.0, 0.0, 0.0, 0.0]
+
+KF_OBS_COVAR: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
