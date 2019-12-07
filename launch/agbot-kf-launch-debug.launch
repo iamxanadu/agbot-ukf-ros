@@ -1,7 +1,9 @@
 <launch>
 
+  <arg name="BAG_LOCATION" value="/home/josef/Downloads/agbot_sensors_realsense_2019-12-03-16-53-49.bag"/> 
+
   <!-- Launch ROS Package Template Node -->
-  <rosparam command="load" file="$(find agbot_ukf)/config/default.yaml" />
+  <rosparam command="load" file="$(find agbot_kf)/config/default.yaml" />
 
   <!-- make the bag location a param -->
   <node pkg="rosbag" type="play" name="agbot_data" output="log" args="--loop -s 25 $(arg BAG_LOCATION)" />

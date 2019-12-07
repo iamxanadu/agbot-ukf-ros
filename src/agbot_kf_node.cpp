@@ -39,6 +39,9 @@ int loop_rate;
 /* Rate at which to publish the kf state */
 int kf_pub_rate;
 
+/* Scaling factors for covariances (for tuning) */
+double init_state_covar_coeff, proc_covar_coeff, obs_covar_coeff;
+
 /* Inputs for the kf from the YAML config */
 std::vector<double> init_state(14, 0);
 std::vector<double> init_state_covar(14, 0);
@@ -59,7 +62,7 @@ spkf::EKF<process_t<double>, observe_t<double>> *ekf;
  * @brief Publish the kalman filter pose and twist periodically
  *
  */
-void kalmanFilterStateCallback(const ros::TimerEvent& event) {
+void kalmanFilterStateCallback(const ros::TimerEvent &event) {
   agbot_kf::KFState msg;
 
   tf2::Quaternion q;
@@ -201,6 +204,9 @@ int main(int argc, char **argv) {
   nh.param<int>("LOOP_RATE", loop_rate, 1000);
   nh.param<int>("KF_PUB_RATE", kf_pub_rate, 10);
   nh.param<std::string>("FILTER_TYPE", filter_type, "ekf");
+  nh.param<double>("KF_INITIAL_STATE_COVAR_COEFF", init_state_covar_coeff, 1.0);
+  nh.param<double>("KF_PROC_COVAR_COEFF", proc_covar_coeff, 1.0);
+  nh.param<double>("KF_OBS_COVAR_COEFF", obs_covar_coeff, 1.0);
 
   if (!nh.getParam("KF_INITIAL_STATE", init_state))
     ROS_ERROR("Failed to get KF_INITIAL_STATE parameter from config");
@@ -269,12 +275,12 @@ int main(int argc, char **argv) {
 
   if (filter_type == "ukf") {
     ukf = new spkf::UKF<process_t<double>, observe_t<double>>(
-        init_state_vec, 0.0001 * init_covar_mat, 0.0001 * proc_covar_mat,
-        obs_covar_mat);
+        init_state_vec, init_state_covar_coeff * init_covar_mat, proc_covar_coeff * proc_covar_mat,
+        obs_covar_coeff * obs_covar_mat);
   } else {
     ekf = new spkf::EKF<process_t<double>, observe_t<double>>(
-        init_state_vec, 0.0001 * init_covar_mat, 0.0001 * proc_covar_mat,
-        obs_covar_mat);
+        init_state_vec, init_state_covar_coeff * init_covar_mat, proc_covar_coeff * proc_covar_mat,
+        obs_covar_coeff * obs_covar_mat);
   }
 
   /* ROS loop rate */
