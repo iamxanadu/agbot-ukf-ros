@@ -244,26 +244,6 @@ int main(int argc, char **argv) {
   const auto proc_covar_mat = CovarT<double>(proc_covar_diag.asDiagonal());
   const auto obs_covar_mat = ObsCovarT<double>(obs_covar_diag.asDiagonal());
 
-  // StateT<double> state = StateT<double>::Zero();
-  // state[0] = -1.4826 * 0.0174532925199433; // Initial state for pitch
-  // state[7] = 0.165;                        // Initial state for z position
-
-  // /* Setup the covariance for initial state, the process model and the
-  //  * observation model */
-  // const auto covar = Eigen::Matrix<double, 14, 14>(
-  //     (Eigen::VectorXd(14) << 100, 100, 100, 10, 10, 10, 10, 10, 300, 300,
-  //     300,
-  //      200, 200, 200)
-  //         .finished()
-  //         .asDiagonal()); // 0.00001 * CovarT<double>::Identity();
-  // const auto procovar = Eigen::Matrix<double, 14, 14>(
-  //     (Eigen::VectorXd(14) << 0, 0, 0, 0, 0, 0, 0, 0, 300, 300, 300, 0, 0, 0)
-  //         .finished()
-  //         .asDiagonal());
-  // const auto obscovar = Eigen::Matrix<double, 6, 6>(
-  //     (Eigen::VectorXd(6) << 0.2, 0.2, 0.2, 0.2, 0.2, 0.2)
-  //         .finished()
-  //         .asDiagonal());
 
   /* Init the control vector */
   ControlT<double> control;
