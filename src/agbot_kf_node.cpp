@@ -149,8 +149,14 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
   /* Run the agbot model to get filtered IMU measurements */
   double VARp[14];
   double fax, fay, faz, fwx, fwy, fwz;
-  agbot_simulinkblock_20191202(ul, ur, ukf->state().data(), VARp, &fax, &fay,
-                               &faz, &fwx, &fwy, &fwz);
+
+  if (filter_type == "ukf") {
+    agbot_simulinkblock_20191202(ul, ur, ukf->state().data(), VARp, &fax, &fay,
+                                 &faz, &fwx, &fwy, &fwz);
+  } else {
+    agbot_simulinkblock_20191202(ul, ur, ekf->state().data(), VARp, &fax, &fay,
+                                 &faz, &fwx, &fwy, &fwz);
+  }
 
   /* Send out the new IMU message with the new values */
   nimu.angular_velocity.x = fwx;
@@ -301,7 +307,7 @@ int main(int argc, char **argv) {
      * running behind */
     bool sleep_success = r.sleep();
 
-    ROS_INFO_STREAM_THROTTLE(0.1, "Was I able to meet the loop rate of "
+    ROS_INFO_STREAM_THROTTLE(0.5, "Was I able to meet the loop rate of "
                                       << loop_rate << " Hz? " << std::boolalpha
                                       << sleep_success);
   }
