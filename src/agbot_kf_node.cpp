@@ -244,7 +244,6 @@ int main(int argc, char **argv) {
   const auto proc_covar_mat = CovarT<double>(proc_covar_diag.asDiagonal());
   const auto obs_covar_mat = ObsCovarT<double>(obs_covar_diag.asDiagonal());
 
-
   /* Init the control vector */
   ControlT<double> control;
 
@@ -255,12 +254,12 @@ int main(int argc, char **argv) {
 
   if (filter_type == "ukf") {
     ukf = new spkf::UKF<process_t<double>, observe_t<double>>(
-        init_state_vec, init_state_covar_coeff * init_covar_mat, proc_covar_coeff * proc_covar_mat,
-        obs_covar_coeff * obs_covar_mat);
+        init_state_vec, init_state_covar_coeff * init_covar_mat,
+        proc_covar_coeff * proc_covar_mat, obs_covar_coeff * obs_covar_mat);
   } else {
     ekf = new spkf::EKF<process_t<double>, observe_t<double>>(
-        init_state_vec, init_state_covar_coeff * init_covar_mat, proc_covar_coeff * proc_covar_mat,
-        obs_covar_coeff * obs_covar_mat);
+        init_state_vec, init_state_covar_coeff * init_covar_mat,
+        proc_covar_coeff * proc_covar_mat, obs_covar_coeff * obs_covar_mat);
   }
 
   /* ROS loop rate */
@@ -286,11 +285,18 @@ int main(int argc, char **argv) {
      */
     ros::spinOnce();
 
-    ROS_INFO_STREAM_THROTTLE(1, "Current Kalman state " << std::endl
-                                                        << ukf->state());
+    if (filter_type == "ukf") {
+      ROS_INFO_STREAM_THROTTLE(1, "Current Kalman state " << std::endl
+                                                          << ukf->state());
+      ROS_INFO_STREAM_THROTTLE(1, "Current Kalman gain " << std::endl
+                                                         << ukf->kalman_gain());
+    } else {
+      ROS_INFO_STREAM_THROTTLE(1, "Current Kalman state " << std::endl
+                                                          << ekf->state());
+      ROS_INFO_STREAM_THROTTLE(1, "Current Kalman gain " << std::endl
+                                                         << ekf->kalman_gain());
+    }
 
-    ROS_INFO_STREAM_THROTTLE(1, "Current Kalman gain " << std::endl
-                                                       << ukf->kalman_gain());
     /* Sleep for the remainder of the loop rate - send info to say if we are
      * running behind */
     bool sleep_success = r.sleep();
