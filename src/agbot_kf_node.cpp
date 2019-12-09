@@ -18,7 +18,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
-#include <matlab_autocode/agbot_simulinkblock_20191202_initialize.h>
+#include <matlab_autocode/agbot_simulinkblock_20191209_data.h>
+#include <matlab_autocode/agbot_simulinkblock_20191209_initialize.h>
 #include <spkf/ekf.h> // TODO (josef) Add the option to switch between ekf and ukf. also get ukf working
 #include <spkf/ukf.h>
 
@@ -151,10 +152,10 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
   double fax, fay, faz, fwx, fwy, fwz;
 
   if (filter_type == "ukf") {
-    agbot_simulinkblock_20191202(ul, ur, ukf->state().data(), VARp, &fax, &fay,
+    agbot_simulinkblock_20191209(ul, ur, ukf->state().data(), VARp, &fax, &fay,
                                  &faz, &fwx, &fwy, &fwz);
   } else {
-    agbot_simulinkblock_20191202(ul, ur, ekf->state().data(), VARp, &fax, &fay,
+    agbot_simulinkblock_20191209(ul, ur, ekf->state().data(), VARp, &fax, &fay,
                                  &faz, &fwx, &fwy, &fwz);
   }
 
@@ -197,7 +198,7 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "ukf");
 
   /* Initialize the agbot model - autocoded from Matlab */
-  agbot_simulinkblock_20191202_initialize();
+  agbot_simulinkblock_20191209_initialize();
 
   /* Ros node handle */
   ros::NodeHandle nh;

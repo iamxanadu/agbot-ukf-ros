@@ -3,7 +3,7 @@ IMU_FILTERED_TOPIC: "/kf/imu"
 L_MOTOR_RATE_TOPIC: "/speed1"
 R_MOTOR_RATE_TOPIC: "/speed2"
 KALMAN_STATE_TOPIC: "/kf/state"
-LOOP_RATE: 100
+LOOP_RATE: 300
 KF_PUB_RATE: 10
 FILTER_TYPE: "ukf" # Either "ukf" or "ekf"
 
@@ -27,24 +27,24 @@ KF_INITIAL_STATE:
 
 KF_INITIAL_STATE_COVAR:
   [
-    100.0,
-    100.0,
-    100.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    10.0,
-    300.0,
-    300.0,
-    300.0,
-    200.0,
-    200.0,
-    200.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
   ]
-KF_INITIAL_STATE_COVAR_COEFF: 1.0
+KF_INITIAL_STATE_COVAR_COEFF: 0.02
 KF_PROC_COVAR:
-  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 300.0, 300.0, 300.0, 0.0, 0.0, 0.0]
-KF_PROC_COVAR_COEFF: 1.0
-KF_OBS_COVAR: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2]
-KF_OBS_COVAR_COEFF: 1.0
+  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+KF_PROC_COVAR_COEFF: 0.002
+KF_OBS_COVAR: [1, 1, 1, 1, 1, 1]
+KF_OBS_COVAR_COEFF: 2.0

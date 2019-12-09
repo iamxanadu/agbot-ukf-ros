@@ -6,7 +6,7 @@ find_package(catkin_simple REQUIRED)
 catkin_simple()
 
 # Add symbols for GDB debugging line by line
-add_compile_options(-g)
+# add_compile_options(-g)
 
 # Glob additional sources for compilation
 file(GLOB MATLAB_AUTOCODE src/matlab_autocode/*.cpp)
