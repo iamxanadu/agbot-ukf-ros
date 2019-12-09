@@ -2,10 +2,11 @@
  * Academic License - for use in teaching, academic research, and meeting
  * course requirements at degree granting institutions only.  Not for
  * government, commercial, or other organizational use.
- * File: rtwtypes.h
  *
- * MATLAB Coder version            : 4.2
- * C/C++ source code generated on  : 03-Dec-2019 16:27:42
+ * rtwtypes.h
+ *
+ * Code generation for function 'agbot_simulinkblock_20191209'
+ *
  */
 
 #ifndef RTWTYPES_H
@@ -39,8 +40,4 @@
 #include "tmwtypes.h"
 #endif
 
-/*
- * File trailer for rtwtypes.h
- *
- * [EOF]
- */
+/* End of code generation (rtwtypes.h) */

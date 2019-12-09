@@ -2,27 +2,32 @@
  * Academic License - for use in teaching, academic research, and meeting
  * course requirements at degree granting institutions only.  Not for
  * government, commercial, or other organizational use.
- * File: rtGetInf.h
  *
- * MATLAB Coder version            : 4.2
- * C/C++ source code generated on  : 03-Dec-2019 16:27:42
+ * rtGetInf.h
+ *
+ * Code generation for function 'agbot_simulinkblock_20191209'
+ *
  */
 
 #ifndef RTGETINF_H
 #define RTGETINF_H
-#include <stddef.h>
 #include "rtwtypes.h"
 #include "rt_nonfinite.h"
+#ifdef __cplusplus
 
-extern real_T rtGetInf(void);
-extern real32_T rtGetInfF(void);
-extern real_T rtGetMinusInf(void);
-extern real32_T rtGetMinusInfF(void);
+extern "C" {
 
 #endif
 
-/*
- * File trailer for rtGetInf.h
- *
- * [EOF]
- */
+  extern real_T rtGetInf(void);
+  extern real32_T rtGetInfF(void);
+  extern real_T rtGetMinusInf(void);
+  extern real32_T rtGetMinusInfF(void);
+
+#ifdef __cplusplus
+
+}
+#endif
+#endif
+
+/* End of code generation (rtGetInf.h) */

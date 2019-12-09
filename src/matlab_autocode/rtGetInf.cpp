@@ -2,10 +2,11 @@
  * Academic License - for use in teaching, academic research, and meeting
  * course requirements at degree granting institutions only.  Not for
  * government, commercial, or other organizational use.
- * File: rtGetInf.cpp
  *
- * MATLAB Coder version            : 4.2
- * C/C++ source code generated on  : 03-Dec-2019 16:27:42
+ * rtGetInf.cpp
+ *
+ * Code generation for function 'agbot_simulinkblock_20191209'
+ *
  */
 
 /*
@@ -14,7 +15,7 @@
  */
 #include "rtGetInf.h"
 
-/* Function: rtGetInf ==================================================
+/* Function: rtGetInf ==================================================================
  * Abstract:
  * Initialize rtInf needed by the generated code.
  */
@@ -23,7 +24,7 @@ real_T rtGetInf(void)
   return rtInf;
 }
 
-/* Function: rtGetInfF ==================================================
+/* Function: rtGetInfF =================================================================
  * Abstract:
  * Initialize rtInfF needed by the generated code.
  */
@@ -32,7 +33,7 @@ real32_T rtGetInfF(void)
   return rtInfF;
 }
 
-/* Function: rtGetMinusInf ==================================================
+/* Function: rtGetMinusInf =============================================================
  * Abstract:
  * Initialize rtMinusInf needed by the generated code.
  */
@@ -41,7 +42,7 @@ real_T rtGetMinusInf(void)
   return rtMinusInf;
 }
 
-/* Function: rtGetMinusInfF ==================================================
+/* Function: rtGetMinusInfF ============================================================
  * Abstract:
  * Initialize rtMinusInfF needed by the generated code.
  */
@@ -50,8 +51,4 @@ real32_T rtGetMinusInfF(void)
   return rtMinusInfF;
 }
 
-/*
- * File trailer for rtGetInf.cpp
- *
- * [EOF]
- */
+/* End of code generation (rtGetInf.cpp) */

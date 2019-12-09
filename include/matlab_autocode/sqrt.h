@@ -14,7 +14,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include "rtwtypes.h"
-#include "agbot_simulinkblock_20191202_types.h"
+#include "agbot_simulinkblock_20191209_types.h"
 
 // Function Declarations
 extern void b_sqrt(double *x);

@@ -13,7 +13,8 @@
 
 #include <Eigen/Eigen>
 
-#include <matlab_autocode/agbot_simulinkblock_20191202.h>
+#include <matlab_autocode/agbot_simulinkblock_20191209_data.h>
+#include <matlab_autocode/agbot_simulinkblock_20191209.h>
 
 /* Current encoder measurements - system input */
 double ul, ur; // rad/s
@@ -76,7 +77,7 @@ template <typename Scalar> struct process_t {
     // ROS_INFO_STREAM_THROTTLE(0.01, "right enc " << std::endl << q_rmdt);
     // ROS_INFO_STREAM_THROTTLE(0.01, "state " << std::endl << state_k);
 
-    agbot_simulinkblock_20191202(q_lmdt, q_rmdt, VAR, VARp, &ax, &ay, &az, &wx,
+    agbot_simulinkblock_20191209(q_lmdt, q_rmdt, VAR, VARp, &ax, &ay, &az, &wx,
                                  &wy, &wz);
 
     // ROS_INFO_STREAM_THROTTLE(0.01, "State delta " << std::endl << del_state);
@@ -113,7 +114,7 @@ template <typename Scalar> struct observe_t {
     // ROS_INFO_STREAM_THROTTLE(0.01, "left enc in obs " << std::endl << ul);
     // ROS_INFO_STREAM_THROTTLE(0.01, "right enc in obs" << std::endl << ur);
 
-    agbot_simulinkblock_20191202(ul, ur, VAR, VARp, &ax, &ay, &az, &wx, &wy,
+    agbot_simulinkblock_20191209(ul, ur, VAR, VARp, &ax, &ay, &az, &wx, &wy,
                                  &wz);
 
     /* populate the observation vector */
