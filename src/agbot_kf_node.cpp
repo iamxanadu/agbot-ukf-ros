@@ -37,7 +37,9 @@ double init_state_covar_coeff, proc_covar_coeff, obs_covar_coeff;
 std::vector<double> init_state(14, 0);
 std::vector<double> init_state_covar(14, 0);
 std::vector<double> proc_covar(14, 0);
-std::vector<double> obs_covar(6, 0);
+std::vector<double>
+    obs_covar(36, 0); // Here we make this a 6x6=36 vector because we will allow
+                      // the user to define the full matrix
 
 /* Header of the previous IMU message to use for dt */
 double prevHeaderTime;
@@ -214,11 +216,12 @@ int main(int argc, char **argv) {
   StateT<double> init_state_vec(init_state.data());
   StateT<double> state_covar_diag(init_state_covar.data());
   StateT<double> proc_covar_diag(proc_covar.data());
-  ObsT<double> obs_covar_diag(obs_covar.data());
 
   const auto init_covar_mat = CovarT<double>(state_covar_diag.asDiagonal());
   const auto proc_covar_mat = CovarT<double>(proc_covar_diag.asDiagonal());
-  const auto obs_covar_mat = ObsCovarT<double>(obs_covar_diag.asDiagonal());
+  const auto obs_covar_mat = ObsCovarT<double>(
+      obs_covar.data()); // Here we take the full data vector since the user
+                         // defined the whole matrix
 
   /* Create the KF here */
 
