@@ -1,0 +1,3 @@
+- `agbot-kf-launch.launch` launches the node and bag file. Filtered IMU topics will be put out on the topics defined in the YAML file.
+- `agbot-kf-launch-debug.launch` launches the node under gdb. Useful for debugging segfaults.
+- `agbot-kf-launch-debug.launch` launched the node, bagfile, and records a new bagfile with filtered messages that is useful for running Kimera in offline mode.

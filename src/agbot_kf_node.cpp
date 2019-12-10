@@ -42,6 +42,9 @@ std::vector<double> obs_covar(6, 0);
 /* Header of the previous IMU message to use for dt */
 double prevHeaderTime;
 
+/* Flag for duplicate IMU measurements */
+bool duplicateIMUMessage;
+
 /* Publisher for the filtered IMU messages */
 ros::Publisher imu_filtered_pub;
 
@@ -65,20 +68,26 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
     /* Time between this message and the last */
     double dt = msg->header.stamp.toSec() - prevHeaderTime;
 
-    /* Init the control vector */
-    ControlT<double> control;
-
-    /* Collect most recent control commands */
-    control[0] = ul;
-    control[1] = ur;
-
-    /* Run a predict step on the KF */
-    if (filter_type == "ukf") {
-      ukf->predict(control, dt,
-                   StateT<double>::Zero()); // Run a dead reconing step
+    if (dt == 0.0) {
+      ROS_INFO_STREAM("Found duplicate IMU measurement; skipping...");
+      duplicateIMUMessage = true;
     } else {
-      ekf->predict(control, dt,
-                   StateT<double>::Zero()); // Run a dead reconing step
+
+      /* Init the control vector */
+      ControlT<double> control;
+
+      /* Collect most recent control commands */
+      control[0] = ul;
+      control[1] = ur;
+
+      /* Run a predict step on the KF */
+      if (filter_type == "ukf") {
+        ukf->predict(control, dt,
+                     StateT<double>::Zero()); // Run a dead reconing step
+      } else {
+        ekf->predict(control, dt,
+                     StateT<double>::Zero()); // Run a dead reconing step
+      }
     }
   }
 
@@ -91,43 +100,48 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
   observ[4] = msg->angular_velocity.y;
   observ[5] = msg->angular_velocity.z;
 
-  /* Innovate and update the KF using this measurement */
-  /* Addative obs noise - we use zero here */
-  if (filter_type == "ukf") {
-    ukf->innovate(observ, ObsT<double>::Zero());
-    ukf->update();
-  } else {
-    ekf->innovate(observ, ObsT<double>::Zero());
-    ekf->update();
+  if (duplicateIMUMessage == false) {
+    /* Innovate and update the KF using this measurement */
+    /* Addative obs noise - we use zero here */
+    if (filter_type == "ukf") {
+      ukf->innovate(observ, ObsT<double>::Zero());
+      ukf->update();
+    } else {
+      ekf->innovate(observ, ObsT<double>::Zero());
+      ekf->update();
+    }
+
+    /* Create new IMU packet with same header */
+    sensor_msgs::Imu nimu;
+    nimu.header = msg->header;
+
+    /* set for next loop */
+    prevHeaderTime = msg->header.stamp.toSec();
+
+    /* Run the agbot model to get filtered IMU measurements */
+    double VARp[14];
+    double fax, fay, faz, fwx, fwy, fwz;
+
+    if (filter_type == "ukf") {
+      agbot_simulinkblock_20191209(ul, ur, ukf->state().data(), VARp, &fax,
+                                   &fay, &faz, &fwx, &fwy, &fwz);
+    } else {
+      agbot_simulinkblock_20191209(ul, ur, ekf->state().data(), VARp, &fax,
+                                   &fay, &faz, &fwx, &fwy, &fwz);
+    }
+
+    /* Send out the new IMU message with the new values */
+    nimu.angular_velocity.x = fwx;
+    nimu.angular_velocity.y = fwy;
+    nimu.angular_velocity.z = fwz;
+    nimu.linear_acceleration.x = fax;
+    nimu.linear_acceleration.y = fay;
+    nimu.linear_acceleration.z = faz;
+    imu_filtered_pub.publish(nimu); // Publish filtered IMU
   }
 
-  /* Create new IMU packet with same header */
-  sensor_msgs::Imu nimu;
-  nimu.header = msg->header;
-
-  /* set for next loop */
-  prevHeaderTime = msg->header.stamp.toSec();
-
-  /* Run the agbot model to get filtered IMU measurements */
-  double VARp[14];
-  double fax, fay, faz, fwx, fwy, fwz;
-
-  if (filter_type == "ukf") {
-    agbot_simulinkblock_20191209(ul, ur, ukf->state().data(), VARp, &fax, &fay,
-                                 &faz, &fwx, &fwy, &fwz);
-  } else {
-    agbot_simulinkblock_20191209(ul, ur, ekf->state().data(), VARp, &fax, &fay,
-                                 &faz, &fwx, &fwy, &fwz);
-  }
-
-  /* Send out the new IMU message with the new values */
-  nimu.angular_velocity.x = fwx;
-  nimu.angular_velocity.y = fwy;
-  nimu.angular_velocity.z = fwz;
-  nimu.linear_acceleration.x = fax;
-  nimu.linear_acceleration.y = fay;
-  nimu.linear_acceleration.z = faz;
-  imu_filtered_pub.publish(nimu); // Publish filtered IMU
+  /* reset flag */
+  duplicateIMUMessage = false;
 }
 
 /**
@@ -138,8 +152,6 @@ void imuRawCallback(const sensor_msgs::Imu::ConstPtr &msg) {
  */
 void leftSpeedCallback(const agbot_kf::StampedInt::ConstPtr &msg) {
   ul = msg->data * -2 * M_PI / (1.079 * 2400);
-
-  // ROS_INFO_STREAM_THROTTLE(0.1, "Left encoder " << ul);
 }
 /**
  * @brief Callback for recieving messages with the right encoder speed. Updates
@@ -149,8 +161,6 @@ void leftSpeedCallback(const agbot_kf::StampedInt::ConstPtr &msg) {
  */
 void rightSpeedCallback(const agbot_kf::StampedInt::ConstPtr &msg) {
   ur = msg->data * 2 * M_PI / (1.070 * 2400);
-
-  // ROS_INFO_STREAM_THROTTLE(0.1, "Right encoder " << ur);
 }
 
 int main(int argc, char **argv) {
@@ -166,6 +176,9 @@ int main(int argc, char **argv) {
 
   /* Initialize to negative */
   prevHeaderTime = -1.0;
+
+  /* Initialize false */
+  duplicateIMUMessage = false;
 
   /* Get parameters from ROS config YAML file */
   nh.param<std::string>("IMU_RAW_TOPIC", top_imu_raw, "/camera/imu");
@@ -189,12 +202,12 @@ int main(int argc, char **argv) {
   /* Setup subscribers and publishers */
   // TODO (josef) May want to try to get synch policy working for tred speed
   // topics
-  ros::Subscriber imu_raw = nh.subscribe(top_imu_raw, 10000, imuRawCallback);
+  ros::Subscriber imu_raw = nh.subscribe(top_imu_raw, 100000, imuRawCallback);
   ros::Subscriber l_motor_rate =
       nh.subscribe(top_l_motor_rate, 1, leftSpeedCallback);
   ros::Subscriber r_motor_rate =
       nh.subscribe(top_r_motor_rate, 1, rightSpeedCallback);
-  imu_filtered_pub = nh.advertise<sensor_msgs::Imu>(top_imu_filtered, 10000);
+  imu_filtered_pub = nh.advertise<sensor_msgs::Imu>(top_imu_filtered, 100000);
 
   /* Create initial states for Kalman filter */
 

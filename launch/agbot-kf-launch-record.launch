@@ -1,0 +1,19 @@
+<launch>
+
+  <!-- Pass as argument -->
+  <arg name="BAG_LOCATION" default="/home/josef/Downloads/agbot_sensors_realsense_2019-12-09-11-33-14.bag"/>
+
+  <!-- Launch ROS Package Template Node -->
+  <rosparam command="load" file="$(find agbot_kf)/config/default.yaml" />
+
+  <!-- Start the agbot node -->
+  <node pkg="agbot_kf" type="agbot_kf" name="agbot_kf" output="screen" />
+
+  <!-- record a new filtered rosbag -->
+  <!-- TODO (josef) The topic names have to agree with default.yaml right now. Unify these. -->
+  <node pkg="rosbag" type="record" name="kf_agbot_data" output="log" args="record -o /home/josef/Code/agbot-ukf-ws/src/agbot-kf/bags/kf_agbot_data /kf/imu /camera/imu /camera/infra1/image_rect_raw /camera/infra2/image_rect_raw /vicon" />
+
+  <!-- play the header-aligned data rosbaf -->
+  <node pkg="rosbag" type="play" name="agbot_data" output="log" args="--clock -s 7 $(arg BAG_LOCATION)" />
+
+</launch>

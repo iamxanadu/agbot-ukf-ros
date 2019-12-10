@@ -53,6 +53,8 @@ template <typename Scalar>
 using ObsCovarT = typename Eigen::Matrix<Scalar, 6, 6>;
 /////////////////////////////////////////////////////
 
+/* Create Kalman Filter Process Model */
+/////////////////////////////////////////////////////
 /* process model: x_{k+1} = f(x_k, u_k) + q */
 template <typename Scalar> struct process_t {
 
@@ -93,8 +95,11 @@ template <typename Scalar> struct process_t {
     return true;
   }
 };
+/////////////////////////////////////////////////////
 
+/* Create Kalman Filter Observation Model */
 /* observation model: z_k = h(x_k) + r_k */
+/////////////////////////////////////////////////////
 template <typename Scalar> struct observe_t {
 
   using scalar_t = Scalar;
@@ -130,3 +135,4 @@ template <typename Scalar> struct observe_t {
     return true;
   }
 };
+/////////////////////////////////////////////////////

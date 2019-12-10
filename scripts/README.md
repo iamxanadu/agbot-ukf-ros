@@ -1,0 +1,1 @@
+Contains a script for reordering ros bag files based on headers in the messages (syncs up bag time with the header time). Obtained from [here](https://wiki.ros.org/rosbag/Cookbook).

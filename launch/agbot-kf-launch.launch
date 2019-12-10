@@ -6,7 +6,7 @@
   <rosparam command="load" file="$(find agbot_kf)/config/default.yaml" />
 
   <!-- make the bag location a param -->
-  <node pkg="rosbag" type="play" name="agbot_data" output="log" args="-s 25 $(arg BAG_LOCATION)" />
+  <node pkg="rosbag" type="play" name="agbot_data" output="log" args="$(arg BAG_LOCATION)" />
 
   <node pkg="agbot_kf" type="agbot_kf" name="agbot_kf" output="screen" />
 
